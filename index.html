@@ -265,30 +265,103 @@
         }
 
         // ── Landscape Mode Definitions ────────────────────────────────────────────────
-        // Each mode controls: sky/fog, lighting, terrain coloring, and star visibility.
-        // Modes not yet implemented fall back to 'default' coloring.
+        // Each mode: sky/fog, lighting, star opacity, terrain preset params, color ramp.
+        // Heights span roughly ±amplitude; color thresholds are tuned per preset.
 
         const MODES = {
             default: {
                 skyColor:         0x080818,
                 fogColor:         0x080818,
-                fogNear:          80,
-                fogFar:           350,
-                ambientColor:     0x202048,
-                ambientIntensity: 0.8,
-                sunColor:         0x6080cc,   // cool moonlight blue
-                sunIntensity:     0.9,
-                fillColor:        0x203060,
-                fillIntensity:    0.4,
-                showStars:        true,
+                fogNear:  80,  fogFar:  350,
+                ambientColor: 0x202048, ambientIntensity: 0.8,
+                sunColor:     0x6080cc, sunIntensity:     0.9,   // cool moonlight
+                fillColor:    0x203060, fillIntensity:    0.4,
+                showStars: true, starOpacity: 0.85,
+                defaults: { scale: 50, amplitude: 15, octaves: 4, persistence: 0.5, lacunarity: 2.0 },
                 colorFn(h) {
                     if (h < 2)  return 0x4a3828;   // moonlit dirt
-                    if (h < 8)  return 0x1a4a1a;   // dark forest green
-                    if (h < 15) return 0x2d6e2d;   // mid green
-                    return 0xd8e0f0;               // blue-white snow peaks
+                    if (h < 8)  return 0x1a4a1a;   // dark forest
+                    if (h < 15) return 0x2d6e2d;   // mid green slope
+                    return 0xd8e0f0;               // blue-white peak snow
                 }
             },
-            // ── Snowy Mountain, Meadow, Beach, Cityscape — added in later steps ──
+
+            snow: {
+                // Deep cold night sky — stars blaze. Terrain: near-black valleys → blazing white peaks.
+                skyColor:         0x02051a,
+                fogColor:         0x02051a,
+                fogNear:  60,  fogFar:  300,
+                ambientColor: 0x0a1830, ambientIntensity: 0.4,
+                sunColor:     0xb8d8ff, sunIntensity:     1.6,   // harsh moonlight on snow
+                fillColor:    0x6080b8, fillIntensity:    0.5,
+                showStars: true, starOpacity: 0.95,              // crystal-clear cold sky
+                defaults: { scale: 45, amplitude: 25, octaves: 6, persistence: 0.5, lacunarity: 2.2 },
+                colorFn(h) {
+                    if (h < 0)  return 0x10121e;   // deep shadowed valley
+                    if (h < 5)  return 0x32364e;   // dark rock base
+                    if (h < 12) return 0x6878a0;   // gray-blue rock face
+                    if (h < 20) return 0xbcd4f0;   // snow-dusted upper slope
+                    return 0xf0f6ff;               // brilliant blinding white peak
+                }
+            },
+
+            meadow: {
+                // Twilight meadow — warm gold light against deep blue sky makes greens electric.
+                skyColor:         0x060c1c,
+                fogColor:         0x060c1c,
+                fogNear:  80,  fogFar:  400,
+                ambientColor: 0x182810, ambientIntensity: 0.7,
+                sunColor:     0xffc840, sunIntensity:     1.0,   // warm golden hour
+                fillColor:    0x204880, fillIntensity:    0.5,   // cool blue fill
+                showStars: true, starOpacity: 0.65,
+                defaults: { scale: 80, amplitude: 6, octaves: 4, persistence: 0.6, lacunarity: 2.0 },
+                colorFn(h) {
+                    if (h < 0)  return 0x1a3858;   // twilight pond
+                    if (h < 1)  return 0x1e6428;   // dark moist soil
+                    if (h < 3)  return 0x28c840;   // vivid electric emerald
+                    if (h < 5)  return 0x88e020;   // bright lime crest
+                    return 0xf0cc18;               // golden wildflower tips
+                }
+            },
+
+            beach: {
+                // Moonlit tropical night — deep navy ocean → blazing cyan shallows → warm gold sand.
+                skyColor:         0x02080e,
+                fogColor:         0x02080e,
+                fogNear:  70,  fogFar:  350,
+                ambientColor: 0x081420, ambientIntensity: 0.6,
+                sunColor:     0xc8f0ff, sunIntensity:     1.1,   // cool moonlight on water
+                fillColor:    0xe07030, fillIntensity:    0.35,  // distant warm glow
+                showStars: true, starOpacity: 0.8,
+                defaults: { scale: 100, amplitude: 4, octaves: 3, persistence: 0.5, lacunarity: 2.0 },
+                colorFn(h) {
+                    if (h < -2) return 0x001e3c;   // deep ocean abyss
+                    if (h < 0)  return 0x004e7a;   // open water
+                    if (h < 1)  return 0x00c8d8;   // vivid shallow turquoise
+                    if (h < 3)  return 0xe0b038;   // wet sand gold
+                    if (h < 5)  return 0xf8d86a;   // dry pale sand
+                    return 0x20963c;               // coastal scrub
+                }
+            },
+
+            city: {
+                // Night city seen from above — near-black streets, orange glow mid-rise, gold skyscrapers.
+                skyColor:         0x010106,
+                fogColor:         0x010106,
+                fogNear:  40,  fogFar:  240,
+                ambientColor: 0x3a1608, ambientIntensity: 1.1,   // orange city upwash
+                sunColor:     0xff8820, sunIntensity:     0.9,   // warm sodium streetlight
+                fillColor:    0x4060a8, fillIntensity:    0.3,   // cool blue fill (moonlight)
+                showStars: true, starOpacity: 0.18,              // light-polluted sky
+                defaults: { scale: 28, amplitude: 20, octaves: 3, persistence: 0.35, lacunarity: 2.5 },
+                colorFn(h) {
+                    if (h < 1)  return 0x08080f;   // street / ground
+                    if (h < 5)  return 0x18182a;   // low buildings, dark
+                    if (h < 10) return 0x982c08;   // mid-rise, warm brick glow
+                    if (h < 16) return 0xec5c08;   // tall buildings, orange blaze
+                    return 0xffe040;               // skyscrapers, bright amber-gold
+                }
+            }
         };
 
         // ── Scene State ───────────────────────────────────────────────────────────────
@@ -386,19 +459,31 @@
             currentMode = modeName;
             const mode = MODES[modeName] || MODES.default;
 
-            scene.background         = new THREE.Color(mode.skyColor);
-            scene.fog.color          = new THREE.Color(mode.fogColor);
-            scene.fog.near           = mode.fogNear;
-            scene.fog.far            = mode.fogFar;
+            scene.background       = new THREE.Color(mode.skyColor);
+            scene.fog.color        = new THREE.Color(mode.fogColor);
+            scene.fog.near         = mode.fogNear;
+            scene.fog.far          = mode.fogFar;
 
-            ambientLight.color       = new THREE.Color(mode.ambientColor);
-            ambientLight.intensity   = mode.ambientIntensity;
-            sunLight.color           = new THREE.Color(mode.sunColor);
-            sunLight.intensity       = mode.sunIntensity;
-            fillLight.color          = new THREE.Color(mode.fillColor);
-            fillLight.intensity      = mode.fillIntensity;
+            ambientLight.color     = new THREE.Color(mode.ambientColor);
+            ambientLight.intensity = mode.ambientIntensity;
+            sunLight.color         = new THREE.Color(mode.sunColor);
+            sunLight.intensity     = mode.sunIntensity;
+            fillLight.color        = new THREE.Color(mode.fillColor);
+            fillLight.intensity    = mode.fillIntensity;
 
-            stars.visible = mode.showStars;
+            stars.visible          = mode.showStars;
+            stars.material.opacity = mode.starOpacity;
+
+            // Apply mode's terrain presets and sync sliders
+            Object.keys(mode.defaults).forEach(key => {
+                params[key] = mode.defaults[key];
+                const slider = document.getElementById(key);
+                const label  = document.getElementById(`${key}-value`);
+                if (slider) slider.value = mode.defaults[key];
+                if (label)  label.textContent = Number.isInteger(mode.defaults[key])
+                    ? mode.defaults[key]
+                    : mode.defaults[key].toFixed(1);
+            });
 
             document.querySelectorAll('.mode-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === modeName);
